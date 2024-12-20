@@ -7,6 +7,7 @@ from PIL import Image
 class Processor (object):
     def __init__(self, file):
         self.file = file
+        self.senderNameToColorDict = dict ()
 
     def do(self):
         with open(str(file), 'r', encoding="utf-8") as j:
@@ -54,12 +55,29 @@ class Processor (object):
         document.save (docName)
     
     def senderNameToColor (self, senderName):
-        if senderName == 'Márk Héger':
-            return RGBColor(0xFF, 0x00, 0x00)
-        elif senderName == 'Daniel Serly':
-            return RGBColor(0x00, 0x00, 0xFF)
-        else:
-            return RGBColor(0x00, 0x00, 0x00)
+
+        if senderName not in self.senderNameToColorDict:
+            color=input(f"Enter color for {senderName}. #RRGGBB, or R for red, G for green, B for blue: ")
+            color = color.upper()
+            if color == 'R':
+                self.senderNameToColorDict[senderName] = RGBColor(0xFF, 0x00, 0x00)
+            elif color == 'G':
+                self.senderNameToColorDict[senderName] = RGBColor(0x00, 0xFF, 0x00)
+            elif color == 'B':
+                self.senderNameToColorDict[senderName] = RGBColor(0x00, 0x00, 0xFF)
+            else:
+                if not color.startswith('#'):
+                    raise Exception ("Illegal color format!")
+                else:
+                    try:
+                        hexR = int (f"0x{color[1:3]}", 16)
+                        hexG = int (f"0x{color[3:5]}", 16)
+                        hexB = int (f"0x{color[5:]}", 16)
+                        self.senderNameToColorDict[senderName] = RGBColor(hexR, hexG, hexB)
+                    except:
+                        raise Exception ("Illegal color format!")
+            print (f'This color will be used for {senderName}: #{str (self.senderNameToColorDict[senderName])}')
+        return self.senderNameToColorDict[senderName]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser ("Messenger Json to Docx converter")
