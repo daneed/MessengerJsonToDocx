@@ -9,12 +9,23 @@ class Processor (object):
         self.file = file
         self.senderNameToColorDict = dict ()
 
-    def do(self):
-        with open(str(file), 'r', encoding="utf-8") as j:
+    def do(self, printCallback):
+        with open(str(self.file), 'r', encoding="utf-8") as j:
             self.jsonContent = json.loads(j.read())
+
+        if not 'messages' in self.jsonContent or len (self.jsonContent['messages']) == 0:
+            return
+
         document = Document()
         document.add_heading(f"Messenger chat közöttük: {", ".join (self.jsonContent['participants'])}")
+
+        for participant in self.jsonContent['participants']:
+            self.senderNameToColor (participant)
+
+        count = 0
         for message in self.jsonContent['messages']:
+            printCallback(count, False)
+            count += 1
             type = message['type']
             senderName = message['senderName']
             para0 = document.add_paragraph('')
@@ -40,7 +51,7 @@ class Processor (object):
                 imageRun = dataCell.paragraphs[0].add_run()
                 for media in message['media']:
                     if 'uri' in media:
-                        picturePath = file.absolute().parent/media['uri'][2:]
+                        picturePath = self.file.absolute().parent/media['uri'][2:]
                         if (picturePath.suffix == '.jpeg'):
                             im = Image.open(str (picturePath))
                             imWidth, imHeight = im.size
@@ -51,8 +62,9 @@ class Processor (object):
                             elif imHeight > 500:
                                 height = Cm(5)
                             imageRun.add_picture (str (picturePath), width=width, height=height)
-        docName = (pathlib.Path (os.getcwd()) / file.name).with_suffix('.docx')
+        docName = (pathlib.Path (os.getcwd()) / self.file.name).with_suffix('.docx')
         document.save (docName)
+        printCallback(count, True)
     
     def senderNameToColor (self, senderName):
 
@@ -81,10 +93,32 @@ class Processor (object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser ("Messenger Json to Docx converter")
-    parser.add_argument ("-f", "--file", help="The input json file", metavar="JSONFILE", required=True)
+    parser.add_argument ("-f", "--fileOrFolder", help="The input json file or the container folder", metavar="JSONFILE", required=True)
     args = parser.parse_args()
-    file = pathlib.Path(args.file)
-    if not file.is_file() or file.suffix != ".json":
-        raise Exception(f"File {file} is not a json file!")
-    processor = Processor(file)
-    processor.do ()
+    path = pathlib.Path(args.fileOrFolder)
+
+    def printFunction (prefix, count, isEnd):
+        if isEnd:
+            print ("DONE", flush=True)
+        elif count == 0:
+            print (f"{prefix}Processing...", end="", flush=True)
+        elif count % 100 == 0:
+            print (".", end="", flush=True)
+
+    if path.is_file() and path.suffix == ".json":
+        print (f"Processing file: {path.name}...", flush=True)
+        processor = Processor(path)
+        processor.do (lambda count, isEnd: printFunction ("", count, isEnd))
+        print (f"   Processing file: {path.name}...DONE", flush=True)
+
+    elif path.is_dir ():
+        print (f"Processing directory: {path.name}...")
+        for subPath in path.iterdir():
+            if subPath.is_file() and subPath.suffix == ".json":
+                print (f"   Processing file: {subPath.name}...", flush=True)
+                processor = Processor(subPath)
+                processor.do (lambda count, isEnd: printFunction ("   ", count, isEnd))
+                print (f"   Processing file: {subPath.name}...DONE", flush=True)
+        print (f"Processing directory {path.name}...DONE")
+    else:
+        raise Exception(f"File {path} is not a json file!")
