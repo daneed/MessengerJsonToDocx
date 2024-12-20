@@ -39,8 +39,8 @@ class Processor (object):
             table.autofit = True
             nameCell = table.cell(0, 0)
             dataCell = table.cell(0, 1)
-            nameCell.width = Cm(3)
-            dataCell.width = Cm(13)
+            nameCell.width = Cm(3.5)
+            dataCell.width = Cm(12.5)
             color = self.senderNameToColor(prefix, senderName)
             senderNameRun = nameCell.paragraphs[0].add_run(f'{senderName}:')
             senderNameRun.font.bold = True
@@ -49,11 +49,13 @@ class Processor (object):
                 messageText = message['text']
                 messageTextRun = dataCell.paragraphs[0].add_run(f' {messageText}')
             elif type == 'media':
-                imageRun = dataCell.paragraphs[0].add_run()
+                mediaRun = dataCell.paragraphs[0].add_run()
+                mediaRun.font.italic = True
                 for media in message['media']:
                     if 'uri' in media:
-                        picturePath = self.file.absolute().parent/media['uri'][2:]
-                        if (picturePath.suffix == '.jpeg'):
+                        mediaName = media['uri'][2:]
+                        picturePath = self.file.absolute().parent/mediaName
+                        if (picturePath.suffix in ['.jpeg', '.gif']):
                             im = Image.open(str (picturePath))
                             imWidth, imHeight = im.size
                             width = None
@@ -62,7 +64,16 @@ class Processor (object):
                                 width = Cm(10)
                             elif imHeight > 500:
                                 height = Cm(5)
-                            imageRun.add_picture (str (picturePath), width=width, height=height)
+                            mediaRun.add_picture (str (picturePath), width=width, height=height)
+                        elif picturePath.suffix:
+                            details = input(f"\nPlease enter details of {mediaName}. You can leave empty: ")
+                            if details:
+                                mediaRun.add_text (f"<{mediaName}>: {details}")
+                            else:
+                                mediaRun.add_text (f"<{mediaName}>.")
+                        else:
+                            mediaRun.add_text (f"<{media['uri']}>")
+
         docName = (pathlib.Path (os.getcwd()) / self.file.name).with_suffix('.docx')
         document.save (docName)
         printCallback(count, True)
