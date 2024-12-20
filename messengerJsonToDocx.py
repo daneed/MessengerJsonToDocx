@@ -9,18 +9,19 @@ class Processor (object):
         self.file = file
         self.senderNameToColorDict = dict ()
 
-    def do(self, printCallback):
+    def do(self, prefix, printCallback):
         with open(str(self.file), 'r', encoding="utf-8") as j:
             self.jsonContent = json.loads(j.read())
 
         if not 'messages' in self.jsonContent or len (self.jsonContent['messages']) == 0:
+            print (f'{prefix} File does not contain any messages.')
             return
 
         document = Document()
         document.add_heading(f"Messenger chat közöttük: {", ".join (self.jsonContent['participants'])}")
 
         for participant in self.jsonContent['participants']:
-            self.senderNameToColor (participant)
+            self.senderNameToColor (prefix, participant)
 
         count = 0
         for message in self.jsonContent['messages']:
@@ -40,7 +41,7 @@ class Processor (object):
             dataCell = table.cell(0, 1)
             nameCell.width = Cm(3)
             dataCell.width = Cm(13)
-            color = self.senderNameToColor(senderName)
+            color = self.senderNameToColor(prefix, senderName)
             senderNameRun = nameCell.paragraphs[0].add_run(f'{senderName}:')
             senderNameRun.font.bold = True
             senderNameRun.font.color.rgb = color
@@ -66,10 +67,10 @@ class Processor (object):
         document.save (docName)
         printCallback(count, True)
     
-    def senderNameToColor (self, senderName):
+    def senderNameToColor (self, prefix, senderName):
 
         if senderName not in self.senderNameToColorDict:
-            color=input(f"Enter color for {senderName}. #RRGGBB, or R for red, G for green, B for blue: ")
+            color=input(f"{prefix}Enter color for {senderName}. #RRGGBB, or R for red, G for green, B for blue: ")
             color = color.upper()
             if color == 'R':
                 self.senderNameToColorDict[senderName] = RGBColor(0xFF, 0x00, 0x00)
@@ -88,7 +89,7 @@ class Processor (object):
                         self.senderNameToColorDict[senderName] = RGBColor(hexR, hexG, hexB)
                     except:
                         raise Exception ("Illegal color format!")
-            print (f'This color will be used for {senderName}: #{str (self.senderNameToColorDict[senderName])}')
+            print (f"{prefix}This color will be used for {senderName}: #{str (self.senderNameToColorDict[senderName])}")
         return self.senderNameToColorDict[senderName]
 
 if __name__ == "__main__":
@@ -101,15 +102,15 @@ if __name__ == "__main__":
         if isEnd:
             print ("DONE", flush=True)
         elif count == 0:
-            print (f"{prefix}Processing...", end="", flush=True)
+            print (f"{prefix}Processing messages...", end="", flush=True)
         elif count % 100 == 0:
             print (".", end="", flush=True)
 
     if path.is_file() and path.suffix == ".json":
         print (f"Processing file: {path.name}...", flush=True)
         processor = Processor(path)
-        processor.do (lambda count, isEnd: printFunction ("", count, isEnd))
-        print (f"   Processing file: {path.name}...DONE", flush=True)
+        processor.do ("   ", lambda count, isEnd: printFunction ("   ", count, isEnd))
+        print (f"Processing file: {path.name}...DONE", flush=True)
 
     elif path.is_dir ():
         print (f"Processing directory: {path.name}...")
@@ -117,7 +118,9 @@ if __name__ == "__main__":
             if subPath.is_file() and subPath.suffix == ".json":
                 print (f"   Processing file: {subPath.name}...", flush=True)
                 processor = Processor(subPath)
-                processor.do (lambda count, isEnd: printFunction ("   ", count, isEnd))
+                processor.do (
+                    "      ",
+                    lambda count, isEnd: printFunction ("   ", count, isEnd))
                 print (f"   Processing file: {subPath.name}...DONE", flush=True)
         print (f"Processing directory {path.name}...DONE")
     else:
