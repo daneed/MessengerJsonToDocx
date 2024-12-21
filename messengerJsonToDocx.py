@@ -1,7 +1,8 @@
-import os, json, datetime, re
+import os, json, datetime, re, textwrap
 import argparse, pathlib
 from docx import Document
 from docx.shared import RGBColor, Cm, Pt
+from docx.enum.style import WD_STYLE_TYPE
 from PIL import Image
 
 class Processor (object):
@@ -21,6 +22,16 @@ class Processor (object):
 
         document = Document()
         document.add_heading(f"Messenger chat közöttük: {", ".join (self.jsonContent['participants'])}")
+
+        section = document.sections[0]
+        section.top_margin = Cm(1.27)
+        section.bottom_margin = Cm(1.27)
+        section.left_margin = Cm(1.27)
+        section.right_margin = Cm(1.27)
+
+        style = document.styles['Normal']
+        style.font.name = 'Consolas'
+        style.font.size = Pt(10)
 
         for participant in self.jsonContent['participants']:
             self.senderNameToColor (prefix, participant)
@@ -47,13 +58,13 @@ class Processor (object):
             nameCell = table.cell(0, 0)
             dataCell = table.cell(0, 1)
             nameCell.width = Cm(3.5)
-            dataCell.width = Cm(12.5)
+            dataCell.width = section.page_width - nameCell.width - section.right_margin - section.left_margin
             color = self.senderNameToColor(prefix, senderName)
             senderNameRun = nameCell.paragraphs[0].add_run(f'{senderName}:')
             senderNameRun.font.bold = True
             senderNameRun.font.color.rgb = color
-            if 'text' in message:
-                messageText = str (message['text'])
+            if 'text' in message and type != 'media':
+                messageText = str (message['text']).strip()
                 prettyMessageText = messageText.replace(f'\n', f'\n{prefix}')
 
                 for pattern in forbiddenStringRegexpPatterns:
@@ -71,8 +82,35 @@ class Processor (object):
                         if len (replacement) > 0:
                             messageText = re.sub (pattern, replacement, messageText)
 
-                dataCell.paragraphs[0].add_run(f' {messageText}')
-            elif type == 'media':
+                splittedWordsWithWhitespaces = list ()
+                words_wo_sp = messageText.split (" ")
+                for i in range(len(words_wo_sp)):
+                    if i < len(words_wo_sp) - 1: words_wo_sp[i] += " "
+                    words_wo_n = words_wo_sp[i].split ("\n")
+                    for j in range (len (words_wo_n)):
+                         if j < len(words_wo_n) - 1: words_wo_n[j] += "\n"
+                         words_wo_r = words_wo_n[j].split("\r")
+                         for k in range (len (words_wo_r)):
+                              if k < len(words_wo_r) - 1: words_wo_r[k] += "\r"
+                              words_wo_t = words_wo_r[k].split("\r")
+                              for l in range (len (words_wo_t)):
+                                  if l < len(words_wo_t) - 1: words_wo_t[l] += "\t"
+                                  splittedWordsWithWhitespaces.append (words_wo_t[l])
+
+                tmpWords = list()
+                for i in range (len(splittedWordsWithWhitespaces)):
+                    tmp = splittedWordsWithWhitespaces[i].split ("-")
+                    for j in range (len(tmp)):
+                        currWord = tmp[j]
+                        if len (currWord) > 80:
+                            currWord = " ".join (textwrap.wrap (currWord, width=80))
+                        if j < len (tmp) -1:
+                            tmpWords.append (currWord + "-")
+                        else:
+                            tmpWords.append(currWord)
+                messageText = ''.join (tmpWords)
+                dataCell.paragraphs[0].add_run(f'{messageText}')
+            if type == 'media':
                 mediaRun = dataCell.paragraphs[0].add_run()
                 mediaRun.font.italic = True
                 for media in message['media']:
