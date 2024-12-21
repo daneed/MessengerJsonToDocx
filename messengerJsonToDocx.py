@@ -52,32 +52,24 @@ class Processor (object):
             senderNameRun.font.color.rgb = color
             if type == 'text':
                 messageText = str (message['text'])
-                origMessageText = messageText
+                prettyMessageText = messageText.replace(f'\n', f'\n{prefix}')
 
-                #testStr = "Igen, akkor csak az anyagot. Szólj ha előbb vegzel és viszem is szerintem ma én 2-3 körül már vegzek a munkámmal. \n\nHéger Attiláné\nUniCredit bank\n10918001-00000125-93320009\n\n731.000.-"
-                #mmm = self.bankAccountRegexObject.search (testStr)
-                #pass
                 for pattern in forbiddenStringRegexpPatterns:
                     match = pattern.search (messageText)
                     if match:
                         if pattern in replacements:
                             replacement = replacements[pattern]
                         else:
-                            prettyMessageText = origMessageText.replace(f'\n', f'\n{prefix}')
                             print (f"\n{prefix}NOTE: FOUND\n{prefix} '{match.group()}' \n{prefix}IN\n{prefix}'{prettyMessageText}'")
                             replacement = input(f'Enter replacement for {match.group()} : ').strip()
                             applyForAllLater = input ('Enter y for apply all later existance: ').upper().strip()
                             if applyForAllLater:
                                 replacements[pattern] = replacement
+
                         if len (replacement) > 0:
                             messageText = re.sub (pattern, replacement, messageText)
 
-                    #if forbiddenString in messageText:
-                    #    replacement = input (f'{forbiddenString} found in {messageText}. Enter replacement! Empty means no replacement.').strip()
-                    #    if len (replacement)>0:
-                    #        messageText.replace(forbiddenString, replacement)
-
-                messageTextRun = dataCell.paragraphs[0].add_run(f' {messageText}')
+                dataCell.paragraphs[0].add_run(f' {messageText}')
             elif type == 'media':
                 mediaRun = dataCell.paragraphs[0].add_run()
                 mediaRun.font.italic = True
