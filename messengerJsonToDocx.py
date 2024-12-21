@@ -1,4 +1,4 @@
-import os, json, datetime
+import os, json, datetime, re
 import argparse, pathlib
 from docx import Document
 from docx.shared import RGBColor, Cm, Pt
@@ -8,6 +8,8 @@ class Processor (object):
     def __init__(self, file):
         self.file = file
         self.senderNameToColorDict = dict ()
+        self.bankAccountRegexObject = re.compile(r'.*([1-9][0-9]{7})([\-|\s]*)([0-9]{8})([\-|\s]*)([0-9]{8}).*', re.IGNORECASE|re.MULTILINE)
+        self.phoneNumberRegexObject = re.compile(r'.*(\+36|06)([\s|\-]*)([0-9]{2})([\s|\-]*)([0-9]{3})([\s|\-]*)([0-9]{4}).*', re.IGNORECASE|re.MULTILINE)
 
     def do(self, prefix, printCallback):
         with open(str(self.file), 'r', encoding="utf-8") as j:
@@ -22,6 +24,9 @@ class Processor (object):
 
         for participant in self.jsonContent['participants']:
             self.senderNameToColor (prefix, participant)
+
+        forbiddenStringRegexpPatterns = self.getForbiddenStringRegexpPatterns(prefix)
+        replacements = dict()
 
         count = 0
         for message in self.jsonContent['messages']:
@@ -46,7 +51,32 @@ class Processor (object):
             senderNameRun.font.bold = True
             senderNameRun.font.color.rgb = color
             if type == 'text':
-                messageText = message['text']
+                messageText = str (message['text'])
+                origMessageText = messageText
+
+                #testStr = "Igen, akkor csak az anyagot. Szólj ha előbb vegzel és viszem is szerintem ma én 2-3 körül már vegzek a munkámmal. \n\nHéger Attiláné\nUniCredit bank\n10918001-00000125-93320009\n\n731.000.-"
+                #mmm = self.bankAccountRegexObject.search (testStr)
+                #pass
+                for pattern in forbiddenStringRegexpPatterns:
+                    match = pattern.search (messageText)
+                    if match:
+                        if pattern in replacements:
+                            replacement = replacements[pattern]
+                        else:
+                            prettyMessageText = origMessageText.replace(f'\n', f'\n{prefix}')
+                            print (f"\n{prefix}NOTE: FOUND\n{prefix} '{match.group()}' \n{prefix}IN\n{prefix}'{prettyMessageText}'")
+                            replacement = input(f'Enter replacement for {match.group()} : ').strip()
+                            applyForAllLater = input ('Enter y for apply all later existance: ').upper().strip()
+                            if applyForAllLater:
+                                replacements[pattern] = replacement
+                        if len (replacement) > 0:
+                            messageText = re.sub (pattern, replacement, messageText)
+
+                    #if forbiddenString in messageText:
+                    #    replacement = input (f'{forbiddenString} found in {messageText}. Enter replacement! Empty means no replacement.').strip()
+                    #    if len (replacement)>0:
+                    #        messageText.replace(forbiddenString, replacement)
+
                 messageTextRun = dataCell.paragraphs[0].add_run(f' {messageText}')
             elif type == 'media':
                 mediaRun = dataCell.paragraphs[0].add_run()
@@ -102,6 +132,26 @@ class Processor (object):
                         raise Exception ("Illegal color format!")
             print (f"{prefix}This color will be used for {senderName}: #{str (self.senderNameToColorDict[senderName])}")
         return self.senderNameToColorDict[senderName]
+    
+    def getForbiddenStringRegexpPatterns (self, prefix):
+        canContinue = True
+        forbiddenStrings = list()
+        while (canContinue):
+            forbiddenString = input (f'{prefix}Enter a forbidden string, or press enter to continue: ').strip()
+            if len(forbiddenString) > 0:
+                forbiddenStrings.append(re.compile (rf'{forbiddenString}', re.IGNORECASE|re.MULTILINE))
+            else:
+                canContinue=False
+
+        doMask=input (f'{prefix}Max bank accounts? press Y to yes: ').strip().upper()
+        if doMask == 'Y':
+            forbiddenStrings.append (self.bankAccountRegexObject)
+
+        doMask=input (f'{prefix}Max phone numbers? press Y to yes: ').strip().upper()
+        if doMask == 'Y':
+            forbiddenStrings.append (self.phoneNumberRegexObject)
+        
+        return forbiddenStrings
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser ("Messenger Json to Docx converter")
