@@ -39,6 +39,8 @@ class Processor (object):
             para0.style.paragraph_format.space_after= Pt(0)
             para0.style.next_paragraph_style = None
             myDate = datetime.datetime.fromtimestamp(int (message['timestamp']/1000.0))
+            if message['timestamp'] == 1734784308085:
+                pass
             document.add_paragraph (f'[{str(myDate)}]')
             table = document.add_table(rows=1, cols=2)
             table.autofit = True
@@ -50,7 +52,7 @@ class Processor (object):
             senderNameRun = nameCell.paragraphs[0].add_run(f'{senderName}:')
             senderNameRun.font.bold = True
             senderNameRun.font.color.rgb = color
-            if type == 'text':
+            if 'text' in message:
                 messageText = str (message['text'])
                 prettyMessageText = messageText.replace(f'\n', f'\n{prefix}')
 
