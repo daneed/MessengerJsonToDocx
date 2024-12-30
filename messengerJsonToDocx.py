@@ -315,7 +315,11 @@ class ProcessorWithHtmlOutput(ProcessorBase):
 
     def AddMessageText(self, text):
         dataCell = self.dataCellWrapper.add(div(cls="dataCell",style=f"background-color:{self.theColor};"))
-        dataCell.add(text)
+        lines = text.splitlines()
+        for i in range (len (lines)):
+            dataCell.add(lines[i])
+            if i < len (lines) - 1:
+                dataCell.add(br())
 
     def AddPicture(self, picturePath, imWidth, imHeight):
         imageFolderName = pathlib.Path(picturePath).parent.name
