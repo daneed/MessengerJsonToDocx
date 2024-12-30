@@ -1,0 +1,88 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: Consolas;
+}
+
+div.container {
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+    word-wrap: break-word;
+}
+
+
+div.oneConversationData {
+    display: table;
+    position: relative;
+    left: 0;
+    width: 98%;
+    height: auto;
+    padding: 0px;
+    padding-bottom: 5px;
+}
+
+div.nameCell {
+    display: table-cell;
+    width:35mm; 
+    max-width:35mm;
+    min-width:35mm; 
+    right: 0;
+    color: white;
+    vertical-align: middle;
+}
+
+
+div.dataCellWrapper {
+    display: table-cell;
+    left: 0;
+    max-width: 300px;
+    min-width: 0px;
+}
+
+div.dataCell {
+    display: inline-block;
+    left: 0;
+    color: white;
+    border-radius: 15px;
+    padding: 10px;
+    min-width: 0px;
+}
+
+div.imgCell {
+    display: inline-block;
+    left: 0;
+    border-radius: 15px;
+    padding: 10px;
+    min-width: 0px;
+    max-width: 50%;
+}
+
+img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    width: auto;
+}
+
+/*div.from {
+display: inline-block;
+position: relative;
+right: 0;
+max-width: 300px;
+background-color: blue;
+color: white;
+border-radius: 15px;
+padding: 10px;
+}
+
+div.to {
+display: inline-block;
+position: relative;
+left: 0;
+max-width: 300px;
+background-color: white;
+color: black;
+border-radius: 15px;
+padding: 10px;
+}*/
