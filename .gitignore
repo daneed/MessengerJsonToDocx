@@ -3,4 +3,5 @@
 *.docx
 *.pdf
 *.html
-
+media/*
+*.jpeg

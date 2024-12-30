@@ -6,6 +6,7 @@ from PIL import Image
 import dominate
 from dominate.tags import *
 from abc import ABC, abstractmethod
+import shutil
 
 
 
@@ -290,6 +291,7 @@ class ProcessorWithHtmlOutput(ProcessorBase):
         
         with self.document.head:
             link(rel='stylesheet', href='messengerStyle.css')
+            meta(charset="UTF-8")
 
         self.container = self.document.add(div(cls="container"))
 
@@ -316,8 +318,13 @@ class ProcessorWithHtmlOutput(ProcessorBase):
         dataCell.add(text)
 
     def AddPicture(self, picturePath, imWidth, imHeight):
+        imageFolderName = pathlib.Path(picturePath).parent.name
+        pictureName = pathlib.Path(picturePath).name
+        imageFolderPath = pathlib.Path (os.getcwd()) / imageFolderName
+        imageFolderPath.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(picturePath, imageFolderPath / pictureName)
         imageCell = self.dataCellWrapper.add(div(cls="imgCell",style=f"background-color:{self.theColor};"))
-        imageCell.add(img(src=str(picturePath)))
+        imageCell.add(img(src=f"{imageFolderName}/{pictureName}"))
 
     def AddMediaNameWithDetails(self, mediaName, details):
         dataCell = self.dataCellWrapper.add(div(cls="dataCell",style=f"background-color:{self.theColor};"))
