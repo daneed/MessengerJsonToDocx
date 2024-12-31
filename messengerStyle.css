@@ -26,7 +26,7 @@ div.oneConversationData {
     width: 98%;
     height: auto;
     padding: 0px;
-    padding-bottom: 5px;
+    margin-bottom: 20px;
 }
 
 div.nameCell {
@@ -78,12 +78,19 @@ img {
     max-height: 300px;
     height: auto;
     width: auto;
+    vertical-align: middle;
 }
 
 
 @media only screen and (max-width: 1080px) {
+    div.dataCell {
+        border-radius: 30px;
+        padding: 20px;
+    }
     div.imgCell {
+        border-radius: 30px;
         max-width: 80%;
+        padding: 20px;
     }
     img {
         max-height: 800px;
