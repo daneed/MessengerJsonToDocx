@@ -4,11 +4,18 @@ body {
     font-family: Consolas;
 }
 
+@media only screen and (max-width: 1080px) {
+    body {
+        font-size: 48px;
+    }
+}
+
 div.container {
     display: inline-block;
     position: absolute;
     width: 100%;
     word-wrap: break-word;
+    word-break: break-word;
 }
 
 
@@ -32,11 +39,19 @@ div.nameCell {
     vertical-align: middle;
 }
 
+@media only screen and (max-width: 1080px) {
+    div.nameCell {
+        width:50mm; 
+        max-width:50mm;
+        min-width:50mm; 
+    }
+}
+
 
 div.dataCellWrapper {
     display: table-cell;
     left: 0;
-    max-width: 300px;
+    max-width: 100%;
     min-width: 0px;
 }
 
@@ -63,6 +78,16 @@ img {
     max-height: 300px;
     height: auto;
     width: auto;
+}
+
+
+@media only screen and (max-width: 1080px) {
+    div.imgCell {
+        max-width: 80%;
+    }
+    img {
+        max-height: 800px;
+    }
 }
 
 /*div.from {

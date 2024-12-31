@@ -22,7 +22,7 @@ class ProcessorBase (ABC):
         self.color = color
 
     @abstractmethod
-    def AddTitle(self):
+    def AddTitle(self, useAbbreviatedName):
         pass
 
     @abstractmethod
@@ -69,7 +69,9 @@ class ProcessorBase (ABC):
             print (f'{prefix} File does not contain any messages.')
             return
         
-        self.AddTitle()
+        useAbbreviatedName = input ("Use abbreviated names? Press Y to yes!").upper() == 'Y'
+        
+        self.AddTitle(useAbbreviatedName)
 
         for participant in self.jsonContent['participants']:
             self._SenderNameToColor(prefix, participant)
@@ -94,7 +96,12 @@ class ProcessorBase (ABC):
 
             self.InitNameAndDataRow()
 
-            self.AddName(senderName)
+            if useAbbreviatedName:
+                parts = senderName.split()
+                abbrevName = "".join ([part[0] for part in parts])
+                self.AddName(abbrevName)
+            else:
+                self.AddName(senderName)
 
             if 'text' in message and type != 'media':
                 messageText = str (message['text']).strip()
@@ -223,8 +230,15 @@ class ProcessorWithDocXOutput (ProcessorBase):
         style.font.name = 'Consolas'
         style.font.size = Pt(10)
 
-    def AddTitle(self):
-        self.document.add_heading(f"Messenger chat közöttük: {", ".join (self.jsonContent['participants'])}")
+    def AddTitle(self, useAbbreviatedName):
+        if useAbbreviatedName:
+            abbreviatedNames = list()
+            for participant in self.jsonContent['participants']:
+                abbreviatedNames.append ("".join ([part[0] for part in participant.split()]))
+            participants = ", ".join (abbreviatedNames)
+        else:
+            participants = ", ".join (self.jsonContent['participants'])
+        self.document.add_heading(f"Messenger chat közöttük: {participants}")
 
     def InitOneConversationData(self):
         para0 = self.document.add_paragraph('')
@@ -295,7 +309,7 @@ class ProcessorWithHtmlOutput(ProcessorBase):
 
         self.container = self.document.add(div(cls="container"))
 
-    def AddTitle(self):
+    def AddTitle(self, useAbbreviatedName):
         self.document.title = f"Messenger chat közöttük: {", ".join (self.jsonContent['participants'])}"
 
     def InitOneConversationData(self):
